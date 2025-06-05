@@ -5,68 +5,54 @@ from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
 import json
+import traceback  # 用來取得完整堆疊資訊
 
 # ----------------------------------------
-# 1. Google Sheets 設定
+# Google Sheets 設定
 # ----------------------------------------
 SHEET_ID = '1jhqJIoxn1X-M_fPBP2hVFwhrwv3vzUzG0uToJIFPBAA'
 SHEET_NAME = '工作表1'
 
 # ----------------------------------------
-# 2. 載入 Service Account 憑證
-#    假設你在 Streamlit Cloud Secrets 裡面這樣放：
-#
-#    [gcp_service_account]
-#    type = "service_account"
-#    project_id = "your-project-id"
-#    private_key_id = "..."
-#    private_key = """-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"""
-#    client_email = "xxx@xxx.iam.gserviceaccount.com"
-#    client_id = "..."
-#    ...
-#
-#    如果你是把整個 JSON 字串塞到 st.secrets["gcp_service_account"]["creds"] 的話，
-#    請改成： service_account_info = json.loads(st.secrets["gcp_service_account"]["creds"])
+# 載入 Service Account 憑證
 # ----------------------------------------
-
 scope = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive'
 ]
 
-# 如果 st.secrets["gcp_service_account"] 本身就是一個 dict（而不是字串），直接用它：
-#    service_account_info = st.secrets["gcp_service_account"]
-#
-# 如果你是把 JSON 字串放在 creds 底下，請把下一行改成：
-#    service_account_info = json.loads(st.secrets["gcp_service_account"]["creds"])
+# 這裡假設你在 Streamlit Cloud Secrets 放的是一個 dict（直接對應 service account JSON）
 service_account_info = st.secrets["gcp_service_account"]
 
 credentials = Credentials.from_service_account_info(
-    service_account_info,
-    scopes=scope
+    service_account_info, scopes=scope
 )
 gc = gspread.authorize(credentials)
 
 # ----------------------------------------
-# 3. 開啟或建立工作表，並且檢查是否已有 header
+# 嘗試開啟 Google Sheet，如果失敗就把詳細錯誤都印出來
 # ----------------------------------------
 try:
     sh = gc.open_by_key(SHEET_ID)
+    worksheet = sh.worksheet(SHEET_NAME)
 except Exception as e:
-    st.error(f"無法開啟 Google Sheet：{e}")
+    # 先把 Exception 的簡短訊息印出
+    st.error(f"無法開啟 Google Sheet（open_by_key 失敗）：{e}")
+    # 再把完整的 traceback 印到 Streamlit
+    st.code(traceback.format_exc())
     st.stop()
 
-# 如果你要確保 header 行存在，可以先去讀第一列，如果沒東西就寫 header
-worksheet = sh.worksheet(SHEET_NAME)
+# ----------------------------------------
+# 如果程式執行到這裡，就代表 open_by_key 成功
+# ----------------------------------------
+# 確保第一列有欄位標題，否則第一次會先寫 header
 all_values = worksheet.get_all_values()
-
 if not all_values or all_values == [[]]:
-    # 如果第一列是空的或索引不到，就先寫入欄位標題
     worksheet.clear()
     worksheet.append_row(["姓名", "日期", "時段"])
 
 # ----------------------------------------
-# 4. 應用程式標題與固定設定
+# 接下來的程式照之前調整好的邏輯繼續
 # ----------------------------------------
 member_list = [
     "宇謙", "姿羽", "昱菱", "映君", "子雋", "大大", "黃芩", "映萱", "毓臨", "慧玲",
@@ -82,32 +68,20 @@ st.set_page_config(
 st.title("禁食禱告小組簽到系統")
 st.markdown("---")
 
-# ----------------------------------------
-# 5. 定義讀取與新增資料的函式
-# ----------------------------------------
 def read_all_records():
-    """讀全部紀錄並回傳 DataFrame，順便把 '日期' 轉成 datetime"""
     data = worksheet.get_all_records()
     if not data:
         return pd.DataFrame(columns=["姓名", "日期", "時段"])
-
     df = pd.DataFrame(data)
-    # 把「日期」從字串轉成 datetime，以利之後排序或畫圖
     try:
         df["日期"] = pd.to_datetime(df["日期"], format="%Y-%m-%d")
-    except Exception:
-        # 如果格式不對就跳過
+    except:
         pass
     return df
 
 def add_record(name, date_str, meal):
-    """加一筆新資料到 Google Sheet"""
-    # date_str 已經是 'YYYY-MM-DD' 格式
     worksheet.append_row([name, date_str, meal])
 
-# ----------------------------------------
-# 6. 簽到表單
-# ----------------------------------------
 st.subheader("每日簽到")
 with st.form("sign_in_form"):
     name = st.selectbox("請選擇您的姓名", [""] + member_list, index=0)
@@ -121,18 +95,13 @@ with st.form("sign_in_form"):
         else:
             df = read_all_records()
             str_date = date.strftime("%Y-%m-%d")
-
-            # 檢查今天這個人、這個時段是否已簽到
             already_signed = False
             if not df.empty:
-                # 因為我們把 df["日期"] 轉成 datetime，所以要比較 to_datetime
                 df_check = df.copy()
                 try:
                     df_check["日期"] = df_check["日期"].dt.strftime("%Y-%m-%d")
-                except Exception:
-                    # 如果原本就沒轉，直接當字串比
+                except:
                     df_check["日期"] = df_check["日期"].astype(str)
-
                 already_signed = (
                     (df_check["姓名"] == name) & 
                     (df_check["日期"] == str_date) & 
@@ -147,14 +116,9 @@ with st.form("sign_in_form"):
 
 st.markdown("---")
 
-# ----------------------------------------
-# 7. 顯示簽到紀錄
-# ----------------------------------------
 st.subheader("簽到紀錄")
 df = read_all_records()
-
 if not df.empty:
-    # 如果日期欄是 datetime，要換回字串顯示
     if pd.api.types.is_datetime64_any_dtype(df["日期"]):
         df_display = df.copy()
         df_display["日期"] = df_display["日期"].dt.strftime("%Y-%m-%d")
@@ -163,7 +127,6 @@ if not df.empty:
 
     names = sorted(df_display["姓名"].unique())
     selected_name = st.selectbox("選擇成員查看紀錄", ["全部"] + names)
-
     if selected_name != "全部":
         df_filtered = df_display[df_display["姓名"] == selected_name]
     else:
@@ -171,7 +134,6 @@ if not df.empty:
 
     st.dataframe(df_filtered, use_container_width=True)
 
-    # 直接顯示下載按鈕，下載 CSV（UTF-8 BOM）
     csv_bytes = df_display.to_csv(index=False).encode("utf-8-sig")
     st.download_button(
         label="📥 下載所有簽到資料 (CSV)",
@@ -180,10 +142,8 @@ if not df.empty:
         mime="text/csv"
     )
 
-    # 如果使用者選擇了單一成員，就額外畫長條圖
     if selected_name != "全部":
         st.subheader(f"{selected_name} 的簽到時段紀錄")
-        # 先把 "日期" 重新轉回 datetime，方便畫圖時自動排序
         df_plot = df_filtered.copy()
         df_plot["日期"] = pd.to_datetime(df_plot["日期"], format="%Y-%m-%d")
         df_plot = df_plot.sort_values("日期")
@@ -197,13 +157,9 @@ if not df.empty:
             labels={"日期": "日期", "時段": "進食時段"}
         )
         st.plotly_chart(fig, use_container_width=True)
-
 else:
     st.info("尚無簽到資料，無法統計。")
 
-# ----------------------------------------
-# 8. 使用說明
-# ----------------------------------------
 st.markdown("---")
 st.markdown("### 使用說明")
 st.markdown(
