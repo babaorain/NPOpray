@@ -105,7 +105,7 @@ member_list = [
 ]
 
 st.markdown(
-    "<h1 style='text-align: center;'>禁食禱告小組簽到系統<br><span style='font-size:1.2em;color:#666;'>06/09~06/21</span></h1>",
+    "<h1 style='text-align: center;'>禁食禱告小組簽到系統<br><span style='font-size:1em;'>06/09~06/21</span></h3>",
     unsafe_allow_html=True
 )
 st.markdown("---")
