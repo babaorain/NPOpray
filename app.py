@@ -238,5 +238,6 @@ st.markdown("""
 4. 點擊「提交簽到」完成簽到  
 5. 上方可檢視「各成員累積簽到次數長條圖」  
 6. 下方可查看所有簽到紀錄與單人成員「各時段簽到紀錄長條圖」  
-7. 點擊「下載所有簽到資料 (CSV)」即可匯出整份紀錄  
+7. 點擊下方連結可看GooleSheets完整紀錄  
+https://docs.google.com/spreadsheets/d/1jhqJIoxn1X-M_fPBP2hVFwhrwv3vzUzG0uToJIFPBAA/edit?usp=sharing
 """)
