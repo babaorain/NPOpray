@@ -176,6 +176,7 @@ if not df_all.empty:
         title="各成員累積簽到次數",
         labels={"姓名": "姓名", "出席次數": "簽到次數"}
     )
+    fig_total.update_traces(width=0.7)
     st.plotly_chart(fig_total, use_container_width=True)
 else:
     st.info("尚無簽到資料，無法顯示累積簽到長條圖。")
@@ -204,14 +205,6 @@ if not df_all.empty:
 
     st.dataframe(df_filtered, use_container_width=True)
 
-    # 匯出 CSV（如果需要）
-    csv_bytes = df_display.to_csv(index=False).encode("utf-8-sig")
-    st.download_button(
-        label="📥 下載所有簽到資料 (CSV)",
-        data=csv_bytes,
-        file_name="attendance_data.csv",
-        mime="text/csv"
-    )
 
     # 若選擇單一成員，就顯示該人各時段累積長條圖
     if selected_name != "全部":
