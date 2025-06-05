@@ -154,7 +154,7 @@ st.markdown("---")
 # ----------------------------------------
 # 8. 繪製「各成員累積簽到次數長條圖」
 # ----------------------------------------
-st.subheader("各成員累積簽到次數（含所有時段）")
+st.subheader("小組員累積簽到次數")
 df_all = read_all_records()
 
 if not df_all.empty:
@@ -176,7 +176,6 @@ if not df_all.empty:
         x="姓名",
         y="出席次數",
         color="姓名",             # 每個人不同顏色
-        title="各成員累積簽到次數",
         labels={"姓名": "姓名", "出席次數": "簽到次數"}
     )
     fig_total.update_traces(width=0.5)
@@ -242,5 +241,5 @@ st.markdown("""
 5. 上方可檢視「各成員累積簽到次數長條圖」  
 6. 下方可查看所有簽到紀錄與單人成員「各時段簽到紀錄長條圖」  
 7. 點擊下方連結可看GooleSheets完整紀錄  
-https://docs.google.com/spreadsheets/d/1jhqJIoxn1X-M_fPBP2hVFwhrwv3vzUzG0uToJIFPBAA/edit?usp=sharing
+https://reurl.cc/AMrZ3Z
 """)
