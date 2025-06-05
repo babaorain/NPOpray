@@ -177,6 +177,14 @@ if not df_all.empty:
         labels={"姓名": "姓名", "出席次數": "簽到次數"}
     )
     fig_total.update_traces(width=0.7)
+    fig_total.update_layout(
+    xaxis = dict(
+        tickmode = 'array',
+        tickvals = count_df['姓名'],
+        ticktext = count_df['姓名'],
+        tickangle=0   # 文字不旋轉
+    )
+)
     st.plotly_chart(fig_total, use_container_width=True)
 else:
     st.info("尚無簽到資料，無法顯示累積簽到長條圖。")
