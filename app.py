@@ -40,31 +40,57 @@ st.title("禁食禱告小組簽到系統")
 st.markdown("---")
 
 # 簽到表單
+st.markdown("---")
+st.subheader("每日簽到")
 with st.form("sign_in_form"):
-    st.subheader("每日簽到")
-    name = st.selectbox("請選擇您的姓名", member_list)
+    # 2. 名字預設為空白
+    name = st.selectbox("請選擇您的姓名", [""] + member_list, index=0)
     date = st.date_input("選擇日期", datetime.now())
-    meal = st.selectbox("請選擇今日進食的時段", ["早餐", "午餐", "晚餐"])
+    meal = st.selectbox("請選擇今日進食的時段", [""] + ["早餐", "午餐", "晚餐"], index=0)
     submitted = st.form_submit_button("提交簽到")
+    # 3. 必須全部有填才能簽到
     if submitted:
-        attendance_record = {
-            "name": name,
-            "date": date.strftime("%Y-%m-%d"),
-            "meal": meal
-        }
-        # 防止同一人同一天同時段重複簽到
-        already_signed = any(
-            rec["name"] == name and rec["date"] == attendance_record["date"] and rec["meal"] == meal
-            for rec in st.session_state.attendance_data
-        )
-        if not already_signed:
-            st.session_state.attendance_data.append(attendance_record)
-            save_data()
-            st.success(f"感謝 {name} 完成「{meal}」的簽到！")
+        if not name or not meal or not date:
+            st.error("請完整選擇姓名、日期與進食時段")
         else:
-            st.warning(f"{name} 今天的「{meal}」已經簽到過囉！")
+            attendance_record = {
+                "name": name,
+                "date": date.strftime("%Y-%m-%d"),
+                "meal": meal
+            }
+            # 防止同一人同一天同時段重複簽到
+            already_signed = any(
+                rec["name"] == name and rec["date"] == attendance_record["date"] and rec["meal"] == meal
+                for rec in st.session_state.attendance_data
+            )
+            if not already_signed:
+                st.session_state.attendance_data.append(attendance_record)
+                save_data()
+                st.success(f"感謝 {name} 完成「{meal}」的簽到！")
+            else:
+                st.warning(f"{name} 今天的「{meal}」已經簽到過囉！")
 
-# 顯示簽到紀錄
+### 1. 先顯示長條圖（每人顏色不同） ###
+st.subheader("各成員累積簽到次數（含所有時段）")
+if st.session_state.attendance_data:
+    df = pd.DataFrame(st.session_state.attendance_data)
+    count_df = df.groupby('name').size().reset_index(name='出席次數')
+    count_df = count_df.set_index('name').reindex(member_list, fill_value=0).reset_index()
+
+    # plotly 自動分配顏色，或也可自定義顏色（這裡用自動）
+    fig2 = px.bar(
+        count_df,
+        x='name',
+        y='出席次數',
+        color='name',  # 讓每人顏色不同
+        title="各成員累積簽到次數",
+        labels={'name': '姓名', '出席次數': '簽到次數'}
+    )
+    st.plotly_chart(fig2, use_container_width=True)
+else:
+    st.info("尚無簽到資料，無法統計。")
+    
+# 顯示簽到紀錄（調到長條圖下方）
 st.markdown("---")
 st.subheader("簽到紀錄")
 
@@ -105,24 +131,6 @@ if st.session_state.attendance_data:
 else:
     st.info("目前尚無簽到紀錄")
 
-# 全員累積簽到次數統計圖
-st.markdown("---")
-st.subheader("各成員累積簽到次數（含所有時段）")
-if st.session_state.attendance_data:
-    df = pd.DataFrame(st.session_state.attendance_data)
-    count_df = df.groupby('name').size().reset_index(name='出席次數')
-    count_df = count_df.set_index('name').reindex(member_list, fill_value=0).reset_index()
-    fig2 = px.bar(
-        count_df,
-        x='name',
-        y='出席次數',
-        title="各成員累積簽到次數",
-        labels={'name': '姓名', '出席次數': '簽到次數'}
-    )
-    st.plotly_chart(fig2, use_container_width=True)
-else:
-    st.info("尚無簽到資料，無法統計。")
-
 # 使用說明
 st.markdown("---")
 st.markdown("### 使用說明")
@@ -131,6 +139,7 @@ st.markdown("""
 2. 選擇簽到日期（預設為今天）
 3. 選擇今日進食的時段（早餐／午餐／晚餐）
 4. 點擊提交完成簽到
-5. 下方可查看所有成員簽到紀錄及圖表
-6. 可匯出資料為 CSV 檔案
+5. 上方可檢視所有成員累積簽到長條圖
+6. 下方可查看所有成員簽到紀錄及圖表
+7. 可匯出資料為 CSV 檔案
 """)
