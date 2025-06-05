@@ -94,7 +94,7 @@ def add_record(name, date_str, meal):
 # 6. 頁面設定與固定成員名單
 # ----------------------------------------
 st.set_page_config(
-    page_title="新世代教會禁食禱告"/n"小組簽到系統",
+    page_title= "新世代教會禁食禱告簽到",
     page_icon="🙏",
     layout="wide"
 )
@@ -104,7 +104,10 @@ member_list = [
     "艾鑫", "嵐翌", "Annie", "怡筠", "柏清哥"
 ]
 
-st.title("禁食禱告小組簽到系統")
+st.markdown(
+    "<h1 style='text-align: center;'>禁食禱告小組簽到系統<br><span style='font-size:1.2em;color:#666;'>06/09~06/21</span></h1>",
+    unsafe_allow_html=True
+)
 st.markdown("---")
 
 # ----------------------------------------
