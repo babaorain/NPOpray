@@ -6,7 +6,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # Google Sheets 設定
-SHEET_ID = '請填入你的 SHEET ID'  # 例如 '1FXXXXXfMgHWjP4eXXXXXnmvI0cw44xw4ABCdT7hZxxxx'
+SHEET_ID = '1jhqJIoxn1X-M_fPBP2hVFwhrwv3vzUzG0uToJIFPBAA'  # 例如 '1FXXXXXfMgHWjP4eXXXXXnmvI0cw44xw4ABCdT7hZxxxx'
 SHEET_NAME = '工作表1'   # 你要存資料的工作表名稱，預設 '工作表1'
 
 # Streamlit secrets 管理金鑰
