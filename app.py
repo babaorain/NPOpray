@@ -107,4 +107,17 @@ if not df.empty:
         )
         st.plotly_chart(fig, use_container_width=True)
 else:
-    st.info("目前尚無
+    st.info("尚無簽到資料，無法統計。")
+
+# 使用說明
+st.markdown("---")
+st.markdown("### 使用說明")
+st.markdown("""
+1. 選擇您的姓名
+2. 選擇簽到日期（預設為今天）
+3. 選擇今日進食的時段（早餐／午餐／晚餐）
+4. 點擊提交完成簽到
+5. 上方可檢視所有成員簽到長條圖
+6. 下方可查看所有成員簽到紀錄及圖表
+7. 可匯出資料為 CSV 檔案
+""")
