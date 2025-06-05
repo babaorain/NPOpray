@@ -5,83 +5,111 @@ from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
 import json
-import traceback  # 用來取得完整堆疊資訊
+import traceback
 
 # ----------------------------------------
-# Google Sheets 設定
+# 1. Google Sheets 設定
 # ----------------------------------------
-SHEET_ID = '1jhqJIoxn1X-M_fPBP2hVFwhrwv3vzUzG0uToJIFPBAA'
-SHEET_NAME = '工作表1'
+SHEET_ID = '1jhqJIoxn1X-M_fPBP2hVFwhrwv3vzUzG0uToJIFPBAA'  # 你的 Sheet ID
+SHEET_NAME = '工作表1'    # 試算表裡的工作表名稱
 
 # ----------------------------------------
-# 載入 Service Account 憑證
+# 2. 載入 Service Account 憑證（來自 Streamlit Secrets）
+#    假設你已在 Streamlit Cloud Secrets 中放置：
+#    [gcp_service_account]
+#    type = "service_account"
+#    project_id = "..."
+#    private_key_id = "..."
+#    private_key = """
+#    -----BEGIN PRIVATE KEY-----
+#    ...
+#    -----END PRIVATE KEY-----
+#    """
+#    client_email = "xxx@xxx.iam.gserviceaccount.com"
+#    client_id = "..."
+#    ...
 # ----------------------------------------
 scope = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive'
 ]
 
-# 這裡假設你在 Streamlit Cloud Secrets 放的是一個 dict（直接對應 service account JSON）
-service_account_info = st.secrets["gcp_service_account"]
-
-credentials = Credentials.from_service_account_info(
-    service_account_info, scopes=scope
-)
-gc = gspread.authorize(credentials)
+try:
+    service_account_info = st.secrets["gcp_service_account"]
+    credentials = Credentials.from_service_account_info(service_account_info, scopes=scope)
+    gc = gspread.authorize(credentials)
+except Exception as e:
+    st.error("無法載入 Google Service Account 憑證，請檢查 Secrets 設定。")
+    st.code(traceback.format_exc())
+    st.stop()
 
 # ----------------------------------------
-# 嘗試開啟 Google Sheet，如果失敗就把詳細錯誤都印出來
+# 3. 嘗試開啟 Google Sheet，若失敗顯示錯誤並停止
 # ----------------------------------------
 try:
     sh = gc.open_by_key(SHEET_ID)
     worksheet = sh.worksheet(SHEET_NAME)
 except Exception as e:
-    # 先把 Exception 的簡短訊息印出
     st.error(f"無法開啟 Google Sheet（open_by_key 失敗）：{e}")
-    # 再把完整的 traceback 印到 Streamlit
     st.code(traceback.format_exc())
     st.stop()
 
 # ----------------------------------------
-# 如果程式執行到這裡，就代表 open_by_key 成功
+# 4. 確保工作表第一列有欄位名稱，否則第一次寫入時先加上標題
 # ----------------------------------------
-# 確保第一列有欄位標題，否則第一次會先寫 header
 all_values = worksheet.get_all_values()
 if not all_values or all_values == [[]]:
+    # 如果是空的，就先寫入 header
     worksheet.clear()
     worksheet.append_row(["姓名", "日期", "時段"])
 
 # ----------------------------------------
-# 接下來的程式照之前調整好的邏輯繼續
+# 5. 定義讀取與新增資料的函式
 # ----------------------------------------
+def read_all_records():
+    """
+    從 Google Sheet 取得全部紀錄，回傳 DataFrame，
+    並嘗試把 '日期' 轉成 datetime 以利後續排序與統計。
+    """
+    data = worksheet.get_all_records()
+    if not data:
+        # 回傳一個空的 DataFrame，包含固定欄位
+        return pd.DataFrame(columns=["姓名", "日期", "時段"])
+    df = pd.DataFrame(data)
+    try:
+        df["日期"] = pd.to_datetime(df["日期"], format="%Y-%m-%d")
+    except Exception:
+        # 若無法轉，就維持原字串
+        pass
+    return df
+
+def add_record(name, date_str, meal):
+    """
+    在 Google Sheet 新增一列：[name, date_str, meal]
+    date_str 格式為 'YYYY-MM-DD'
+    """
+    worksheet.append_row([name, date_str, meal])
+
+# ----------------------------------------
+# 6. 頁面設定與固定成員名單
+# ----------------------------------------
+st.set_page_config(
+    page_title="禁食禱告小組簽到系統",
+    page_icon="🙏",
+    layout="wide"
+)
+
 member_list = [
     "宇謙", "姿羽", "昱菱", "映君", "子雋", "大大", "黃芩", "映萱", "毓臨", "慧玲",
     "艾鑫", "嵐翌", "Annie", "怡筠", "柏清哥"
 ]
 
-st.set_page_config(
-    page_title="禁食禱告小組簽到系統",
-    page_icon="🙏",
-    layout="centered"
-)
-
 st.title("禁食禱告小組簽到系統")
 st.markdown("---")
 
-def read_all_records():
-    data = worksheet.get_all_records()
-    if not data:
-        return pd.DataFrame(columns=["姓名", "日期", "時段"])
-    df = pd.DataFrame(data)
-    try:
-        df["日期"] = pd.to_datetime(df["日期"], format="%Y-%m-%d")
-    except:
-        pass
-    return df
-
-def add_record(name, date_str, meal):
-    worksheet.append_row([name, date_str, meal])
-
+# ----------------------------------------
+# 7. 簽到表單區塊
+# ----------------------------------------
 st.subheader("每日簽到")
 with st.form("sign_in_form"):
     name = st.selectbox("請選擇您的姓名", [""] + member_list, index=0)
@@ -93,18 +121,22 @@ with st.form("sign_in_form"):
         if not name or not meal:
             st.error("請完整選擇姓名、日期與進食時段")
         else:
-            df = read_all_records()
+            # 先讀取現有所有紀錄
+            df_existing = read_all_records()
             str_date = date.strftime("%Y-%m-%d")
+
+            # 如果已有資料，先把“日期”轉回字串，方便比對
             already_signed = False
-            if not df.empty:
-                df_check = df.copy()
+            if not df_existing.empty:
+                df_check = df_existing.copy()
                 try:
                     df_check["日期"] = df_check["日期"].dt.strftime("%Y-%m-%d")
-                except:
+                except Exception:
                     df_check["日期"] = df_check["日期"].astype(str)
+
                 already_signed = (
-                    (df_check["姓名"] == name) & 
-                    (df_check["日期"] == str_date) & 
+                    (df_check["姓名"] == name) &
+                    (df_check["日期"] == str_date) &
                     (df_check["時段"] == meal)
                 ).any()
 
@@ -116,17 +148,55 @@ with st.form("sign_in_form"):
 
 st.markdown("---")
 
+# ----------------------------------------
+# 8. 繪製「各成員累積簽到次數長條圖」
+# ----------------------------------------
+st.subheader("各成員累積簽到次數（含所有時段）")
+df_all = read_all_records()
+
+if not df_all.empty:
+    # 如果讀到的 DataFrame 中“日期”欄是 datetime 型別，先把它轉回字串，以免後續 groupby 出錯
+    if pd.api.types.is_datetime64_any_dtype(df_all["日期"]):
+        df_plot = df_all.copy()
+        df_plot["日期"] = df_plot["日期"].dt.strftime("%Y-%m-%d")
+    else:
+        df_plot = df_all.copy()
+
+    # 計算每位成員的累積簽到次數
+    count_df = df_plot.groupby("姓名").size().reset_index(name="出席次數")
+
+    # 針對 member_list 補齊零次者
+    count_df = count_df.set_index("姓名").reindex(member_list, fill_value=0).reset_index()
+
+    fig_total = px.bar(
+        count_df,
+        x="姓名",
+        y="出席次數",
+        color="姓名",             # 每個人不同顏色
+        title="各成員累積簽到次數",
+        labels={"姓名": "姓名", "出席次數": "簽到次數"}
+    )
+    st.plotly_chart(fig_total, use_container_width=True)
+else:
+    st.info("尚無簽到資料，無法顯示累積簽到長條圖。")
+
+# ----------------------------------------
+# 9. 顯示「簽到紀錄」表格與「單人成員簽到時段長條圖」
+# ----------------------------------------
+st.markdown("---")
 st.subheader("簽到紀錄")
-df = read_all_records()
-if not df.empty:
-    if pd.api.types.is_datetime64_any_dtype(df["日期"]):
-        df_display = df.copy()
+
+if not df_all.empty:
+    # 同樣把日期欄轉回字串以避免顯示錯誤
+    if pd.api.types.is_datetime64_any_dtype(df_all["日期"]):
+        df_display = df_all.copy()
         df_display["日期"] = df_display["日期"].dt.strftime("%Y-%m-%d")
     else:
-        df_display = df
+        df_display = df_all.copy()
 
     names = sorted(df_display["姓名"].unique())
     selected_name = st.selectbox("選擇成員查看紀錄", ["全部"] + names)
+
     if selected_name != "全部":
         df_filtered = df_display[df_display["姓名"] == selected_name]
     else:
@@ -134,6 +204,7 @@ if not df.empty:
 
     st.dataframe(df_filtered, use_container_width=True)
 
+    # 匯出 CSV（如果需要）
     csv_bytes = df_display.to_csv(index=False).encode("utf-8-sig")
     st.download_button(
         label="📥 下載所有簽到資料 (CSV)",
@@ -142,34 +213,37 @@ if not df.empty:
         mime="text/csv"
     )
 
+    # 若選擇單一成員，就顯示該人各時段累積長條圖
     if selected_name != "全部":
         st.subheader(f"{selected_name} 的簽到時段紀錄")
-        df_plot = df_filtered.copy()
-        df_plot["日期"] = pd.to_datetime(df_plot["日期"], format="%Y-%m-%d")
-        df_plot = df_plot.sort_values("日期")
+        # 再將「日期」轉回 datetime 以便畫圖時自動按時間排序
+        df_person = df_filtered.copy()
+        df_person["date_dt"] = pd.to_datetime(df_person["日期"], format="%Y-%m-%d")
+        df_person = df_person.sort_values("date_dt")
 
-        fig = px.bar(
-            df_plot,
-            x="日期",
+        fig_person = px.bar(
+            df_person,
+            x="date_dt",
             color="時段",
             barmode="group",
             title=f"{selected_name} 各時段簽到紀錄",
-            labels={"日期": "日期", "時段": "進食時段"}
+            labels={"date_dt": "日期", "時段": "進食時段"}
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig_person, use_container_width=True)
 else:
-    st.info("尚無簽到資料，無法統計。")
+    st.info("目前尚無簽到紀錄")
 
+# ----------------------------------------
+# 10. 使用說明
+# ----------------------------------------
 st.markdown("---")
 st.markdown("### 使用說明")
-st.markdown(
-    """
+st.markdown("""
 1. 選擇您的姓名  
 2. 選擇簽到日期（預設為今天）  
 3. 選擇今日進食的時段（早餐／午餐／晚餐）  
 4. 點擊「提交簽到」完成簽到  
-5. 上方可檢視所有成員簽到長條圖（需選擇單一成員）  
-6. 下方可查看所有成員簽到紀錄及表格  
+5. 上方可檢視「各成員累積簽到次數長條圖」  
+6. 下方可查看所有簽到紀錄與單人成員「各時段簽到紀錄長條圖」  
 7. 點擊「下載所有簽到資料 (CSV)」即可匯出整份紀錄  
-    """
-)
+""")
