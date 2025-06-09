@@ -122,7 +122,7 @@ with st.form("sign_in_form"):
 
     if submitted:
         if not name or not meal:
-            st.error("請完整選擇姓名、日期與進食時段")
+            st.error("請完整選擇姓名、日期與禁食時段")
         else:
             # 先讀取現有所有紀錄
             df_existing = read_all_records()
