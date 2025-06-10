@@ -180,10 +180,6 @@ if not found:
 else:
     for meal in ["早餐", "午餐", "晚餐"]:
         st.markdown(f"- **{meal}**：{leader_info[meal]}")
-
-# 顯示結果
-for meal in ["早餐", "午餐", "晚餐"]:
-    st.markdown(f"- **{meal}**：{leader_info[meal]}")   
 st.markdown("---")
 
 # ----------------------------------------
