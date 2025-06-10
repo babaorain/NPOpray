@@ -108,6 +108,37 @@ st.markdown(
     "<h2 style='text-align: center;'>怡筠小組禁食禱告簽到<br><span style='font-size:1em;'>06/09~06/29</span></h3>",
     unsafe_allow_html=True
 )
+# 6.5. 新增：每日帶領成員顯示
+# ----------------------------------------
+SCHEDULE_SHEET_ID   = '1F325FUwqpbvgkITUnIaQ_ZS3Ic77q9w8L4cdrT0iBiA'
+SCHEDULE_SHEET_NAME = '工作表1'   # 仔細填入那份 Google Sheet 的工作表名稱
+# 打開帶領表
+try:
+    sched_sh = gc.open_by_key(SCHEDULE_SHEET_ID)
+    sched_ws = sched_sh.worksheet(SCHEDULE_SHEET_NAME)
+    sched_data = sched_ws.get_all_records()
+    df_sched = pd.DataFrame(sched_data)
+    # 假設你的欄位長得像：['日期', '早餐帶領', '午餐帶領', '晚餐帶領']
+    df_sched['日期'] = pd.to_datetime(df_sched['日期'], format='%Y-%m-%d').dt.date
+except Exception as e:
+    st.error(f"無法載入帶領表：{e}")
+    df_sched = pd.DataFrame(columns=['日期', '早餐帶領', '午餐帶領', '晚餐帶領'])
+
+# 取得要顯示的日期（預設今日，也可以改用 st.date_input 讓使用者選擇）
+today_date = datetime.now().date()
+
+# 找到對應那一天的帶領資訊
+row = df_sched[df_sched['日期'] == today_date]
+if not row.empty:
+    b_lead = row.iloc[0]['早餐帶領']
+    l_lead = row.iloc[0]['午餐帶領']
+    d_lead = row.iloc[0]['晚餐帶領']
+    st.markdown(f"### {today_date.strftime('%Y-%m-%d')} 今日帶領名單")
+    st.markdown(f"- **早餐**：{b_lead}  \n- **午餐**：{l_lead}  \n- **晚餐**：{d_lead}")
+else:
+    st.markdown(f"### {today_date.strftime('%Y-%m-%d')} 今日帶領名單")
+    st.info("尚未設定帶領成員")
+    
 st.markdown("---")
 
 # ----------------------------------------
