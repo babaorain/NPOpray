@@ -108,37 +108,73 @@ st.markdown(
     "<h2 style='text-align: center;'>怡筠小組禁食禱告簽到<br><span style='font-size:1em;'>06/09~06/29</span></h3>",
     unsafe_allow_html=True
 )
-# 6.5. 新增：每日帶領成員顯示
-# ----------------------------------------
-SCHEDULE_SHEET_ID   = '1F325FUwqpbvgkITUnIaQ_ZS3Ic77q9w8L4cdrT0iBiA'
-SCHEDULE_SHEET_NAME = '工作表1'   # 仔細填入那份 Google Sheet 的工作表名稱
-# 打開帶領表
+SCHEDULE_SHEET_ID = '1F325FUwqpbvgkITUnIaQ_ZS3Ic77q9w8L4cdrT0iBiA'
+SCHEDULE_SHEET_NAME = '工作表1'
+
+scope = [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive'
+]
+
+# 載入憑證
+try:
+    service_account_info = st.secrets["gcp_service_account"]
+    credentials = Credentials.from_service_account_info(service_account_info, scopes=scope)
+    gc = gspread.authorize(credentials)
+except Exception:
+    st.error("無法載入 Google Service Account 憑證，請檢查 Secrets 設定。")
+    st.code(traceback.format_exc())
+    st.stop()
+
+# 讀取帶領表原始資料
 try:
     sched_sh = gc.open_by_key(SCHEDULE_SHEET_ID)
     sched_ws = sched_sh.worksheet(SCHEDULE_SHEET_NAME)
-    sched_data = sched_ws.get_all_records()
-    df_sched = pd.DataFrame(sched_data)
-    # 假設你的欄位長得像：['日期', '早餐帶領', '午餐帶領', '晚餐帶領']
-    df_sched['日期'] = pd.to_datetime(df_sched['日期'], format='%Y-%m-%d').dt.date
+    raw_data = sched_ws.get_all_values()
 except Exception as e:
-    st.error(f"無法載入帶領表：{e}")
-    df_sched = pd.DataFrame(columns=['日期', '早餐帶領', '午餐帶領', '晚餐帶領'])
+    st.error(f"無法讀取帶領表資料：{e}")
+    st.code(traceback.format_exc())
+    st.stop()
 
-# 取得要顯示的日期（預設今日，也可以改用 st.date_input 讓使用者選擇）
-today_date = datetime.now().date()
+# Streamlit 標題
+st.markdown("### 今日帶領小組員")
 
-# 找到對應那一天的帶領資訊
-row = df_sched[df_sched['日期'] == today_date]
-if not row.empty:
-    b_lead = row.iloc[0]['早餐帶領']
-    l_lead = row.iloc[0]['午餐帶領']
-    d_lead = row.iloc[0]['晚餐帶領']
-    st.markdown(f"### {today_date.strftime('%Y-%m-%d')} 今日帶領名單")
-    st.markdown(f"- **早餐**：{b_lead}  \n- **午餐**：{l_lead}  \n- **晚餐**：{d_lead}")
-else:
-    st.markdown(f"### {today_date.strftime('%Y-%m-%d')} 今日帶領名單")
-    st.info("尚未設定帶領成員")
-    
+# 取得今日日期（格式 mm/d）
+today = datetime.now().strftime("%-m/%-d")  # 6/10 格式 （Linux/Mac）
+# windows 可用: today = datetime.now().strftime("%#m/%#d")
+
+# 找出日期所在欄位（第一個日期欄位在第三列）
+# 因你的日期在 raw_data[2] (第三列 index 2)
+header_row_index = 2  # 第3列（index 2）
+date_row = raw_data[header_row_index]
+
+# 找到今日日期欄位索引
+try:
+    date_col_index = date_row.index(today)
+except ValueError:
+    st.warning(f"找不到今天日期 {today} 在帶領表中")
+    st.stop()
+
+# 早中晚列的列號（你的截圖中是第5、7、9列，index 分別4,6,8）
+row_map = {
+    "早餐": 4,
+    "午餐": 6,
+    "晚餐": 8
+}
+
+# 取當天欄位的帶領人
+leader_info = {}
+for meal, row_idx in row_map.items():
+    # 防止索引超出範圍
+    if row_idx < len(raw_data) and date_col_index < len(raw_data[row_idx]):
+        leader = raw_data[row_idx][date_col_index].strip()
+    else:
+        leader = ""
+    leader_info[meal] = leader if leader else "尚未安排"
+
+# 顯示結果
+for meal in ["早餐", "午餐", "晚餐"]:
+    st.markdown(f"- **{meal}**：{leader_info[meal]}")   
 st.markdown("---")
 
 # ----------------------------------------
