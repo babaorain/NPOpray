@@ -137,40 +137,49 @@ except Exception as e:
     st.stop()
 
 # Streamlit 標題
-st.markdown("### 今日帶領小組員")
+display_date = datetime.now().strftime("%m/%d")  # 06/10 格式（兩位數月份）
+st.markdown(f"### {display_date} 帶領人員")
 
-# 取得今日日期（格式 mm/d）
-today = datetime.now().strftime("%-m/%-d")  # 6/10 格式 （Linux/Mac）
-# windows 可用: today = datetime.now().strftime("%#m/%#d")
+today = datetime.now().strftime("%-m/%-d")  # Linux/Mac
+# Windows 用：
+# today = datetime.now().strftime("%#m/%#d")
 
-# 找出日期所在欄位（第一個日期欄位在第三列）
-# 因你的日期在 raw_data[2] (第三列 index 2)
-header_row_index = 2  # 第3列（index 2）
-date_row = raw_data[header_row_index]
+# 多組日期列所在 index（以截圖判斷）
+date_header_rows = [2, 9, 16]  # 第3、10、17列 index
 
-# 找到今日日期欄位索引
-try:
-    date_col_index = date_row.index(today)
-except ValueError:
-    st.warning(f"找不到今天日期 {today} 在帶領表中")
-    st.stop()
-
-# 早中晚列的列號（你的截圖中是第5、7、9列，index 分別4,6,8）
-row_map = {
-    "早餐": 4,
-    "午餐": 6,
-    "晚餐": 8
+# 早中晚列相對於日期列的偏移
+meal_row_offsets = {
+    "早餐": 2,  # 例如日期列2，早餐列4 (2 + 2)
+    "午餐": 4,
+    "晚餐": 6
 }
 
-# 取當天欄位的帶領人
+found = False
 leader_info = {}
-for meal, row_idx in row_map.items():
-    # 防止索引超出範圍
-    if row_idx < len(raw_data) and date_col_index < len(raw_data[row_idx]):
-        leader = raw_data[row_idx][date_col_index].strip()
-    else:
-        leader = ""
-    leader_info[meal] = leader if leader else "尚未安排"
+
+for date_row_idx in date_header_rows:
+    if date_row_idx >= len(raw_data):
+        continue
+    date_row = raw_data[date_row_idx]
+    if today in date_row:
+        found = True
+        date_col_index = date_row.index(today)
+
+        # 取三餐帶領人
+        for meal, offset in meal_row_offsets.items():
+            meal_row_idx = date_row_idx + offset
+            if meal_row_idx < len(raw_data) and date_col_index < len(raw_data[meal_row_idx]):
+                leader = raw_data[meal_row_idx][date_col_index].strip()
+            else:
+                leader = ""
+            leader_info[meal] = leader if leader else "尚未安排"
+        break
+
+if not found:
+    st.warning(f"找不到今天日期 {today} 在帶領表中")
+else:
+    for meal in ["早餐", "午餐", "晚餐"]:
+        st.markdown(f"- **{meal}**：{leader_info[meal]}")
 
 # 顯示結果
 for meal in ["早餐", "午餐", "晚餐"]:
