@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from datetime import datetime
+from datetime import datetime, timedelta
 import gspread
 from google.oauth2.service_account import Credentials
 import json
@@ -103,10 +103,28 @@ member_list = [
     "艾鑫", "嵐翌", "Annie", "怡筠", "柏清哥"
 ]
 
+# 大標題
 st.markdown(
     "<h2 style='text-align: center;'>怡筠小組禁食禱告簽到<br><span style='font-size:1em;'>06/09~06/29</span></h3>",
     unsafe_allow_html=True
 )
+# 設定起始日
+start_date = datetime.strptime("2024-06-09", "%Y-%m-%d").date()
+today_date = datetime.now().date()
+
+# 計算第幾天
+day_count = (today_date - start_date).days + 1
+
+# 星期中文顯示
+weekday_dict = {0:"一", 1:"二", 2:"三", 3:"四", 4:"五", 5:"六", 6:"日"}
+weekday_str = weekday_dict[today_date.weekday()]
+
+# 顯示格式 
+display_today = today_date.strftime("%m/%d") + f"({weekday_str}) 第{day_count}天"
+
+# 今日日期與第幾天顯示
+st.markdown(f"<div style='text-align:center; font-size:1.2em; font-weight:bold;'>今天日 {display_today}</div>", unsafe_allow_html=True)
+
 SCHEDULE_SHEET_ID = '1F325FUwqpbvgkITUnIaQ_ZS3Ic77q9w8L4cdrT0iBiA'
 SCHEDULE_SHEET_NAME = '工作表1'
 
