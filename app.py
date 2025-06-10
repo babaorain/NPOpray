@@ -109,13 +109,13 @@ st.markdown(
     unsafe_allow_html=True
 )
 # 今日日期顯示
-start_date = datetime.strptime("2024-06-09", "%Y-%m-%d").date()
+start_date = datetime.strptime("2025-06-09", "%Y-%m-%d").date()
 today_date = datetime.now().date()
 day_count = (today_date - start_date).days + 1
 weekday_dict = {0:"一", 1:"二", 2:"三", 3:"四", 4:"五", 5:"六", 6:"日"}
 weekday_str = weekday_dict[today_date.weekday()]
 display_today = today_date.strftime("%m/%d") + f"({weekday_str}) 第{day_count}天"
-st.markdown(f"<div style='text-align:center; font-size:1.2em; font-weight:bold;'>今天日 {display_today}</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; font-size:1.2em; font-weight:bold;'> {display_today}</div>", unsafe_allow_html=True)
 
 SCHEDULE_SHEET_ID = '1F325FUwqpbvgkITUnIaQ_ZS3Ic77q9w8L4cdrT0iBiA'
 SCHEDULE_SHEET_NAME = '工作表1'
