@@ -268,16 +268,13 @@ if not df_all.empty:
     else:
         df_display = df_all.copy()
 
-    # 重新排列欄位順序
-    cols = df_display.columns.tolist()
-    # 如果有禱告方式欄，放到第三或第四欄（你要第四欄）
-    if "禱告方式" in cols:
-        ordered_cols = ["日期", "姓名", "時段", "禱告方式"]
-        # 如果還有其他欄位，附加後面
-        for c in cols:
-            if c not in ordered_cols:
-                ordered_cols.append(c)
-        df_display = df_display[ordered_cols]
+    
+    # 只顯示這四欄，且順序為你指定
+    display_cols = ["日期", "姓名", "時段", "禱告方式"]
+    for col in display_cols:
+        if col not in df_display.columns:
+            df_display[col] = ""
+    df_display = df_display[display_cols]
 
     names = sorted(df_display["姓名"].unique())
     selected_name = st.selectbox("選擇成員查看紀錄", ["全部"] + names)
