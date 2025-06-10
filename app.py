@@ -87,7 +87,7 @@ def add_record(name, date_str, meal, prayer_type):
     """
     在 Google Sheet 新增一列：[姓名, 日期, 時段, 禱告方式]
     """
-    worksheet.append_row([name, date_str, meal, prayer_type])
+    worksheet.append_row([date_str, name, meal, prayer_type])
 
 # ----------------------------------------
 # 6. 頁面設定與固定成員名單
