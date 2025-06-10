@@ -186,8 +186,8 @@ st.markdown("---")
 # ----------------------------------------
 st.subheader("每日簽到")
 with st.form("sign_in_form"):
-    name = st.selectbox("請選擇您的姓名", [""] + member_list, index=0)
     date = st.date_input("選擇日期", datetime.now().date())
+    name = st.selectbox("請選擇您的姓名", [""] + member_list, index=0)
     meal = st.selectbox("請選擇今日禁食的時段", [""] + ["早餐", "午餐", "晚餐"], index=0)
     prayer_type = st.selectbox("請選擇禱告方式", [""] + ["自我禱告", "線上禱告"], index=0)
     submitted = st.form_submit_button("提交簽到")
