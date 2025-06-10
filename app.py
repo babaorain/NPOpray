@@ -83,12 +83,11 @@ def read_all_records():
         pass
     return df
 
-def add_record(name, date_str, meal):
+def add_record(name, date_str, meal, prayer_type):
     """
-    在 Google Sheet 新增一列：[name, date_str, meal]
-    date_str 格式為 'YYYY-MM-DD'
+    在 Google Sheet 新增一列：[姓名, 日期, 時段, 禱告方式]
     """
-    worksheet.append_row([name, date_str, meal])
+    worksheet.append_row([name, date_str, meal, prayer_type])
 
 # ----------------------------------------
 # 6. 頁面設定與固定成員名單
@@ -190,17 +189,17 @@ with st.form("sign_in_form"):
     name = st.selectbox("請選擇您的姓名", [""] + member_list, index=0)
     date = st.date_input("選擇日期", datetime.now().date())
     meal = st.selectbox("請選擇今日禁食的時段", [""] + ["早餐", "午餐", "晚餐"], index=0)
+    prayer_type = st.selectbox("請選擇禱告方式", [""] + ["自我禱告", "線上禱告"], index=0)
     submitted = st.form_submit_button("提交簽到")
 
     if submitted:
-        if not name or not meal:
-            st.error("請完整選擇姓名、日期與禁食時段")
+        if not name or not meal or not prayer_type:
+            st.error("請完整選擇姓名、日期、禁食時段與禱告方式")
         else:
-            # 先讀取現有所有紀錄
             df_existing = read_all_records()
             str_date = date.strftime("%Y-%m-%d")
 
-            # 如果已有資料，先把“日期”轉回字串，方便比對
+            # 檢查是否重複簽到（含禱告方式）
             already_signed = False
             if not df_existing.empty:
                 df_check = df_existing.copy()
@@ -212,14 +211,15 @@ with st.form("sign_in_form"):
                 already_signed = (
                     (df_check["姓名"] == name) &
                     (df_check["日期"] == str_date) &
-                    (df_check["時段"] == meal)
+                    (df_check["時段"] == meal) &
+                    (df_check.get("禱告方式", None) == prayer_type)  # 若欄位不存在會是 None
                 ).any()
 
             if not already_signed:
-                add_record(name, str_date, meal)
-                st.success(f"感謝 {name} 完成「{meal}」的簽到！")
+                add_record(name, str_date, meal, prayer_type)
+                st.success(f"感謝 {name} 完成「{meal}」的簽到，禱告方式：{prayer_type}！")
             else:
-                st.warning(f"{name} 今天的「{meal}」已經簽到過囉！")
+                st.warning(f"{name} 今天的「{meal}」及「{prayer_type}」已經簽到過囉！")
 
 st.markdown("---")
 
@@ -262,12 +262,22 @@ st.markdown("---")
 st.subheader("簽到紀錄")
 
 if not df_all.empty:
-    # 同樣把日期欄轉回字串以避免顯示錯誤
     if pd.api.types.is_datetime64_any_dtype(df_all["日期"]):
         df_display = df_all.copy()
         df_display["日期"] = df_display["日期"].dt.strftime("%Y-%m-%d")
     else:
         df_display = df_all.copy()
+
+    # 重新排列欄位順序
+    cols = df_display.columns.tolist()
+    # 如果有禱告方式欄，放到第三或第四欄（你要第四欄）
+    if "禱告方式" in cols:
+        ordered_cols = ["日期", "姓名", "時段", "禱告方式"]
+        # 如果還有其他欄位，附加後面
+        for c in cols:
+            if c not in ordered_cols:
+                ordered_cols.append(c)
+        df_display = df_display[ordered_cols]
 
     names = sorted(df_display["姓名"].unique())
     selected_name = st.selectbox("選擇成員查看紀錄", ["全部"] + names)
