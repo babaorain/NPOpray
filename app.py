@@ -112,11 +112,27 @@ display_today = today_date.strftime("%m/%d") + f"({ weekday_str}) 第{day_count}
 
 # 大標題
 st.markdown(
-    "<h2 style='text-align: center;'>怡筠小組禁食禱告簽到<br><span style='font-size:1em;'>06/09~06/29</span></h3>",
+    f"""
+    <div style="text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin-bottom: 30px;">
+        <h2 style="
+            font-weight: 700;
+            font-size: 2.8em;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.2);
+            margin-bottom: 0.2em;
+        ">
+            怡筠小組禁食禱告簽到<br>
+            <span style="font-size:1em; color: #555; letter-spacing: 2px;">06/09~06/29</span>
+        </h2>
+        <div style="font-size: 1.5em; font-weight: bold; color: #333; margin-top: 10px;">
+            {display_today}
+        </div>
+    </div>
+    """,
     unsafe_allow_html=True
 )
-# 今日日期顯示
-st.markdown(f"<div style='text-align:center; font-size:1.5em; font-weight:bold;'> {display_today}</div>", unsafe_allow_html=True)
 
 SCHEDULE_SHEET_ID = '1F325FUwqpbvgkITUnIaQ_ZS3Ic77q9w8L4cdrT0iBiA'
 SCHEDULE_SHEET_NAME = '工作表1'
