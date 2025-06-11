@@ -117,7 +117,7 @@ st.markdown(
     <div style="text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin-bottom: 10px;">
         <h2 style="
             font-weight: 700;
-            font-size: 2.5em;
+            font-size: 2.0em;
             color: #000000;
             margin-bottom: 0em;
         ">
