@@ -159,7 +159,7 @@ except Exception as e:
 
 # Streamlit 標題
 display_date = datetime.now().strftime("%m/%d")  # 06/10 格式（兩位數月份）
-st.markdown(f"### {display_today}<br>今日帶領人員")
+st.markdown(f"### {display_today}<br>今日帶領人員", unsafe_allow_html=True)
 
 today = datetime.now().strftime("%-m/%-d")  # Linux/Mac
 # Windows 用：
