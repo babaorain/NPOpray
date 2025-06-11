@@ -108,7 +108,7 @@ today_date = datetime.now().date()
 day_count = (today_date - start_date).days + 1
 weekday_dict = {0:"一", 1:"二", 2:"三", 3:"四", 4:"五", 5:"六", 6:"日"}
 weekday_str = weekday_dict[today_date.weekday()]
-display_today = today_date.strftime("%m/%d") + f" ({weekday_str}) 第{day_count}天"
+display_today = today_date.strftime("%m/%d") + f" ({weekday_str}) 禁食第{day_count}天"
 
 
 # 大標題
@@ -159,7 +159,7 @@ except Exception as e:
 
 # Streamlit 標題
 display_date = datetime.now().strftime("%m/%d")  # 06/10 格式（兩位數月份）
-st.markdown(f"### {display_today} 帶領人員")
+st.markdown(f"### {display_today}，今日帶領人員")
 
 today = datetime.now().strftime("%-m/%-d")  # Linux/Mac
 # Windows 用：
