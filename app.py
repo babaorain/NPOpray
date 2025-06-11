@@ -112,7 +112,7 @@ display_today = today_date.strftime("%m/%d") + f"({ weekday_str}) 第{day_count}
 
 # 大標題
 st.markdown(
-    "<h2 style='text-align: center;'>怡筠小組禁食禱告簽到<p><span style='font-size:1em;'>06/09~06/29</span></h3>",
+    "<h2 style='text-align: center;'>怡筠小組禁食禱告簽到<br><span style='font-size:1em;'>06/09~06/29</span></h3>",
     unsafe_allow_html=True
 )
 # 今日日期顯示
