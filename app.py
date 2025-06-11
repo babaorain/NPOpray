@@ -207,17 +207,13 @@ for date_row_idx in date_header_rows:
 if not found:
     st.warning(f"找不到今天日期 {today} 在帶領表中")
 else:
-    for meal in ["早餐", "午餐", "晚餐"]:
-    meal_clean = meal.strip().replace('\u3000', '')
-    leader = leader_info.get(meal_clean, "尚未安排")
-    st.markdown(
-        f"""
-        <p style="text-align:center; margin:0; padding:0;">
-            <strong>{meal_clean}</strong>：{leader}
-        </p>
-        """,
-        unsafe_allow_html=True
-    )
+    for meal in ["早餐", "午餐", "晚餐"]:Add commentMore actions
+        st.markdown(
+    f"""
+    <p style="text-align:center;"><strong>{meal}</strong>：{leader_info[meal]}</p>
+    """,
+    unsafe_allow_html=True
+)
 
 st.markdown("---")
 
