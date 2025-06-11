@@ -103,19 +103,20 @@ member_list = [
     "艾鑫", "嵐翌", "Annie", "怡筠", "柏清哥"
 ]
 
-# 大標題
-st.markdown(
-    "<h2 style='text-align: center;'>怡筠小組禁食禱告簽到<br><span style='font-size:1em;'>06/09~06/29</span></h3>",
-    unsafe_allow_html=True
-)
-# 今日日期顯示
 start_date = datetime.strptime("2025-06-09", "%Y-%m-%d").date()
 today_date = datetime.now().date()
 day_count = (today_date - start_date).days + 1
 weekday_dict = {0:"一", 1:"二", 2:"三", 3:"四", 4:"五", 5:"六", 6:"日"}
 weekday_str = weekday_dict[today_date.weekday()]
 display_today = today_date.strftime("%m/%d") + f"({ weekday_str}) 第{day_count}天"
-st.markdown(f"<div style='text-align:center; font-size:1.2em; font-weight:bold;'> {display_today}</div>", unsafe_allow_html=True)
+
+# 大標題
+st.markdown(
+    "<h2 style='text-align: center;'>怡筠小組禁食禱告簽到<p><span style='font-size:1em;'>06/09~06/29</span></h3>",
+    unsafe_allow_html=True
+)
+# 今日日期顯示
+st.markdown(f"<div style='text-align:center; font-size:1.5em; font-weight:bold;'> {display_today}</div>", unsafe_allow_html=True)
 
 SCHEDULE_SHEET_ID = '1F325FUwqpbvgkITUnIaQ_ZS3Ic77q9w8L4cdrT0iBiA'
 SCHEDULE_SHEET_NAME = '工作表1'
