@@ -162,7 +162,7 @@ display_date = datetime.now().strftime("%m/%d")  # 06/10 格式（兩位數月�
 
 st.markdown(
     f"""
-    <div style="line-height: 2.5; font-size: 1.2em;">
+    <div style="line-height: 1.5; font-size: 1.2em; margin-bottom: 5px;">
         {display_today}<br>
         今日帶領人員
     </div>
