@@ -121,9 +121,9 @@ st.markdown(
             margin-bottom: 0em;
         ">
             怡筠小組禁食禱告簽到<br>
-            <span style="font-size:1em; color: #555; letter-spacing: 5px;">06/09~06/29</span>
+            <span style="font-size:1em; color: #555; letter-spacing: 2px;">06/09~06/29</span>
         </h2>
-        <span style="font-size: 1.4em; font-weight: bold; color: #333; margin-top: 5px;">
+        <span style="font-size: 1.4em; font-weight: bold; color: #333; margin-top: 2px;">
             {display_today}
         </span>
     </div>
