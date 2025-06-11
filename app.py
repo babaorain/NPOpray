@@ -108,7 +108,8 @@ today_date = datetime.now().date()
 day_count = (today_date - start_date).days + 1
 weekday_dict = {0:"一", 1:"二", 2:"三", 3:"四", 4:"五", 5:"六", 6:"日"}
 weekday_str = weekday_dict[today_date.weekday()]
-display_today = today_date.strftime("%m/%d") + f"({ weekday_str}) 第{day_count}天"
+display_today = today_date.strftime("%m/%d") + f" ({weekday_str}) 第{day_count}天"
+
 
 # 大標題
 st.markdown(
@@ -123,14 +124,10 @@ st.markdown(
             怡筠小組禁食禱告簽到<br>
             <span style="font-size:1em; color: #555; letter-spacing: 2px;">06/09~06/29</span>
         </h2>
-        <span style="font-size: 1.4em; font-weight: bold; color: #333; margin-top: 2px;">
-            {display_today}
-        </span>
     </div>
     """,
     unsafe_allow_html=True
 )
-
 
 SCHEDULE_SHEET_ID = '1F325FUwqpbvgkITUnIaQ_ZS3Ic77q9w8L4cdrT0iBiA'
 SCHEDULE_SHEET_NAME = '工作表1'
@@ -162,7 +159,7 @@ except Exception as e:
 
 # Streamlit 標題
 display_date = datetime.now().strftime("%m/%d")  # 06/10 格式（兩位數月份）
-st.markdown(f"### {display_date} 帶領人員")
+st.markdown(f"### {display_today} 帶領人員")
 
 today = datetime.now().strftime("%-m/%-d")  # Linux/Mac
 # Windows 用：
