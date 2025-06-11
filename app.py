@@ -198,7 +198,7 @@ for date_row_idx in date_header_rows:
         for meal, offset in meal_row_offsets.items():
             meal_row_idx = date_row_idx + offset
             if meal_row_idx < len(raw_data) and date_col_index < len(raw_data[meal_row_idx]):
-                leader = raw_data[meal_row_idx][date_col_index].strip()
+                leader = raw_data[meal_row_idx][date_col_index].strip().replace('\u3000', '')
             else:
                 leader = ""
             leader_info[meal] = leader if leader else "尚未安排"
