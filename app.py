@@ -6,6 +6,7 @@ import pytz
 import gspread
 from google.oauth2.service_account import Credentials
 import traceback
+import plotly.graph_objects as go
 
 # 台灣時區
 taiwan_tz = pytz.timezone("Asia/Taipei")
@@ -166,9 +167,19 @@ if not df_all.empty:
         df_plot["日期"] = df_plot["日期"].dt.strftime("%Y-%m-%d")
     count_df = df_plot.groupby("姓名").size().reset_index(name="出席次數")
     count_df = count_df.set_index("姓名").reindex(members, fill_value=0).reset_index()
-    fig = px.bar(count_df, x="姓名", y="出席次數", color="姓名", labels={"姓名": "姓名", "出席次數": "簽到次數"})
-    fig.update_traces(width=0.5)
-    st.plotly_chart(fig, use_container_width=True)
+    fig = go.Figure(
+    data=[go.Bar(
+        x=count_df["姓名"],
+        y=count_df["出席次數"],
+        marker_color='rgba(26, 118, 255, 0.7)'
+    )]
+)
+fig.update_layout(
+    yaxis_title="簽到次數",
+    xaxis_title="姓名",
+    title="小組員累積簽到次數"
+)
+st.plotly_chart(fig, use_container_width=True)
 else:
     st.info("尚無簽到資料")
 
