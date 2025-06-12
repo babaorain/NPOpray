@@ -2,33 +2,23 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime, timedelta
+import pytz
 import gspread
 from google.oauth2.service_account import Credentials
-import json
 import traceback
 
 # ----------------------------------------
-# 1. Google Sheets 設定
+# 1. 台灣時區設定
+# ----------------------------------------
+taiwan_tz = pytz.timezone("Asia/Taipei")
+now_taiwan = datetime.now(taiwan_tz)
+
+# ----------------------------------------
+# 2. Google Sheets 設定
 # ----------------------------------------
 SHEET_ID = '1jhqJIoxn1X-M_fPBP2hVFwhrwv3vzUzG0uToJIFPBAA'  # 你的 Sheet ID
 SHEET_NAME = '工作表1'    # 試算表裡的工作表名稱
 
-# ----------------------------------------
-# 2. 載入 Service Account 憑證（來自 Streamlit Secrets）
-#    假設你已在 Streamlit Cloud Secrets 中放置：
-#    [gcp_service_account]
-#    type = "service_account"
-#    project_id = "..."
-#    private_key_id = "..."
-#    private_key = """
-#    -----BEGIN PRIVATE KEY-----
-#    ...
-#    -----END PRIVATE KEY-----
-#    """
-#    client_email = "xxx@xxx.iam.gserviceaccount.com"
-#    client_id = "..."
-#    ...
-# ----------------------------------------
 scope = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive'
@@ -43,9 +33,6 @@ except Exception as e:
     st.code(traceback.format_exc())
     st.stop()
 
-# ----------------------------------------
-# 3. 嘗試開啟 Google Sheet，若失敗顯示錯誤並停止
-# ----------------------------------------
 try:
     sh = gc.open_by_key(SHEET_ID)
     worksheet = sh.worksheet(SHEET_NAME)
@@ -55,42 +42,42 @@ except Exception as e:
     st.stop()
 
 # ----------------------------------------
-# 4. 確保工作表第一列有欄位名稱，否則第一次寫入時先加上標題
+# 3. 確保工作表第一列有欄位名稱，否則第一次寫入時先加上標題
 # ----------------------------------------
 all_values = worksheet.get_all_values()
 if not all_values or all_values == [[]]:
-    # 如果是空的，就先寫入 header
     worksheet.clear()
-    worksheet.append_row(["姓名", "日期", "時段"])
+    worksheet.append_row(["姓名", "日期", "時段", "禱告方式"])
 
 # ----------------------------------------
-# 5. 定義讀取與新增資料的函式
+# 4. 定義讀取與新增資料的函式
 # ----------------------------------------
 def read_all_records():
-    """
-    從 Google Sheet 取得全部紀錄，回傳 DataFrame，
-    並嘗試把 '日期' 轉成 datetime 以利後續排序與統計。
-    """
     data = worksheet.get_all_records()
     if not data:
-        # 回傳一個空的 DataFrame，包含固定欄位
-        return pd.DataFrame(columns=["姓名", "日期", "時段"])
+        return pd.DataFrame(columns=["姓名", "日期", "時段", "禱告方式"])
     df = pd.DataFrame(data)
     try:
         df["日期"] = pd.to_datetime(df["日期"], format="%Y-%m-%d")
     except Exception:
-        # 若無法轉，就維持原字串
         pass
     return df
 
 def add_record(name, date_str, meal, prayer_type):
-    """
-    在 Google Sheet 新增一列：[姓名, 日期, 時段, 禱告方式]
-    """
-    worksheet.append_row([date_str, name, meal, prayer_type])
+    worksheet.append_row([name, date_str, meal, prayer_type])
 
 # ----------------------------------------
-# 6. 頁面設定與固定成員名單
+# 5. 時間相關設定
+# ----------------------------------------
+start_date = datetime.strptime("2025-06-09", "%Y-%m-%d").date()
+today_date = now_taiwan.date()
+day_count = (today_date - start_date).days + 1
+weekday_dict = {0:"一", 1:"二", 2:"三", 3:"四", 4:"五", 5:"六", 6:"日"}
+weekday_str = weekday_dict[now_taiwan.weekday()]
+display_today = now_taiwan.strftime("%m/%d") + f" ({weekday_str}) 禁食第{day_count}天"
+
+# ----------------------------------------
+# 6. Streamlit 頁面配置與 UI
 # ----------------------------------------
 st.set_page_config(
     page_title= "新世代教會禁食禱告簽到",
@@ -102,14 +89,6 @@ member_list = [
     "宇謙", "姿羽", "昱菱", "映君", "子雋", "大大", "黃芩", "映萱", "毓臨", "慧玲",
     "艾鑫", "嵐翌", "Annie", "怡筠", "柏清哥"
 ]
-
-start_date = datetime.strptime("2025-06-09", "%Y-%m-%d").date()
-today_date = datetime.now().date()
-day_count = (today_date - start_date).days + 1
-weekday_dict = {0:"一", 1:"二", 2:"三", 3:"四", 4:"五", 5:"六", 6:"日"}
-weekday_str = weekday_dict[today_date.weekday()]
-display_today = today_date.strftime("%m/%d") + f" ({weekday_str}) 禁食第{day_count}天"
-
 
 # 大標題
 st.markdown(
@@ -129,25 +108,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# ----------------------------------------
+# 7. 讀取帶領表資料設定（第二個 Google Sheet）
+# ----------------------------------------
 SCHEDULE_SHEET_ID = '1F325FUwqpbvgkITUnIaQ_ZS3Ic77q9w8L4cdrT0iBiA'
 SCHEDULE_SHEET_NAME = '工作表1'
 
-scope = [
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive'
-]
-
-# 載入憑證
-try:
-    service_account_info = st.secrets["gcp_service_account"]
-    credentials = Credentials.from_service_account_info(service_account_info, scopes=scope)
-    gc = gspread.authorize(credentials)
-except Exception:
-    st.error("無法載入 Google Service Account 憑證，請檢查 Secrets 設定。")
-    st.code(traceback.format_exc())
-    st.stop()
-
-# 讀取帶領表原始資料
 try:
     sched_sh = gc.open_by_key(SCHEDULE_SHEET_ID)
     sched_ws = sched_sh.worksheet(SCHEDULE_SHEET_NAME)
@@ -157,9 +123,7 @@ except Exception as e:
     st.code(traceback.format_exc())
     st.stop()
 
-# Streamlit 標題
-display_date = datetime.now().strftime("%m/%d")  # 06/10 格式（兩位數月份）
-
+# 顯示今日日期與帶領人
 st.markdown(
     f"""
     <div style="text-align: center; line-height: 2; font-size: 1.2em; font-weight: bold; margin-bottom: 10px;">
@@ -169,16 +133,13 @@ st.markdown(
     """,
     unsafe_allow_html=True)
 
-today = datetime.now().strftime("%-m/%-d")  # Linux/Mac
-# Windows 用：
-# today = datetime.now().strftime("%#m/%#d")
+# 使用台灣時區取得的日期，格式跟帶領表對應
+today = now_taiwan.strftime("%-m/%-d")  # Linux/Mac，如 Windows 請改成 "%#m/%#d"
 
-# 多組日期列所在 index（以截圖判斷）
-date_header_rows = [2, 9, 16]  # 第3、10、17列 index
+date_header_rows = [2, 9, 16]  # 帶領表日期列索引（0-based）
 
-# 早中晚列相對於日期列的偏移
 meal_row_offsets = {
-    "早餐": 2,  # 例如日期列2，早餐列4 (2 + 2)
+    "早餐": 2,
     "午餐": 4,
     "晚餐": 6
 }
@@ -194,7 +155,6 @@ for date_row_idx in date_header_rows:
         found = True
         date_col_index = date_row.index(today)
 
-        # 取三餐帶領人
         for meal, offset in meal_row_offsets.items():
             meal_row_idx = date_row_idx + offset
             if meal_row_idx < len(raw_data) and date_col_index < len(raw_data[meal_row_idx]):
@@ -209,20 +169,20 @@ if not found:
 else:
     for meal in ["早餐", "午餐", "晚餐"]:
         st.markdown(
-    f"""
-    <p style="text-align:center;"><strong>{meal}</strong>：{leader_info[meal]}</p>
-    """,
-    unsafe_allow_html=True
-)
+            f"""
+            <p style="text-align:center;"><strong>{meal}</strong>：{leader_info[meal]}</p>
+            """,
+            unsafe_allow_html=True
+        )
 
 st.markdown("---")
 
 # ----------------------------------------
-# 7. 簽到表單區塊
+# 8. 簽到表單
 # ----------------------------------------
 st.subheader("每日簽到")
 with st.form("sign_in_form"):
-    date = st.date_input("選擇日期", datetime.now().date())
+    date = st.date_input("選擇日期", now_taiwan.date())
     name = st.selectbox("請選擇您的姓名", [""] + member_list, index=0)
     meal = st.selectbox("請選擇今日禁食的時段", [""] + ["早餐", "午餐", "晚餐"], index=0)
     prayer_type = st.selectbox("請選擇禱告方式", [""] + ["自我禱告", "線上禱告"], index=0)
@@ -235,7 +195,6 @@ with st.form("sign_in_form"):
             df_existing = read_all_records()
             str_date = date.strftime("%Y-%m-%d")
 
-            # 檢查是否重複簽到（含禱告方式）
             already_signed = False
             if not df_existing.empty:
                 df_check = df_existing.copy()
@@ -248,7 +207,7 @@ with st.form("sign_in_form"):
                     (df_check["姓名"] == name) &
                     (df_check["日期"] == str_date) &
                     (df_check["時段"] == meal) &
-                    (df_check.get("禱告方式", None) == prayer_type)  # 若欄位不存在會是 None
+                    (df_check.get("禱告方式", None) == prayer_type)
                 ).any()
 
             if not already_signed:
@@ -260,30 +219,26 @@ with st.form("sign_in_form"):
 st.markdown("---")
 
 # ----------------------------------------
-# 8. 繪製「各成員累積簽到次數長條圖」
+# 9. 繪製累積簽到長條圖
 # ----------------------------------------
 st.subheader("小組員累積簽到次數")
 df_all = read_all_records()
 
 if not df_all.empty:
-    # 如果讀到的 DataFrame 中“日期”欄是 datetime 型別，先把它轉回字串，以免後續 groupby 出錯
     if pd.api.types.is_datetime64_any_dtype(df_all["日期"]):
         df_plot = df_all.copy()
         df_plot["日期"] = df_plot["日期"].dt.strftime("%Y-%m-%d")
     else:
         df_plot = df_all.copy()
 
-    # 計算每位成員的累積簽到次數
     count_df = df_plot.groupby("姓名").size().reset_index(name="出席次數")
-
-    # 針對 member_list 補齊零次者
     count_df = count_df.set_index("姓名").reindex(member_list, fill_value=0).reset_index()
 
     fig_total = px.bar(
         count_df,
         x="姓名",
         y="出席次數",
-        color="姓名",             # 每個人不同顏色
+        color="姓名",
         labels={"姓名": "姓名", "出席次數": "簽到次數"}
     )
     fig_total.update_traces(width=0.5)
@@ -292,7 +247,7 @@ else:
     st.info("尚無簽到資料，無法顯示累積簽到長條圖。")
 
 # ----------------------------------------
-# 9. 顯示「簽到紀錄」表格與「單人成員簽到時段長條圖」
+# 10. 顯示簽到紀錄表格與單人成員時段長條圖
 # ----------------------------------------
 st.markdown("---")
 st.subheader("簽到紀錄")
@@ -304,8 +259,6 @@ if not df_all.empty:
     else:
         df_display = df_all.copy()
 
-    
-    # 只顯示這四欄，且順序為你指定
     display_cols = ["日期", "姓名", "時段", "禱告方式"]
     for col in display_cols:
         if col not in df_display.columns:
@@ -322,11 +275,8 @@ if not df_all.empty:
 
     st.dataframe(df_filtered, use_container_width=True)
 
-
-    # 若選擇單一成員，就顯示該人各時段累積長條圖
     if selected_name != "全部":
         st.subheader(f"{selected_name} 的簽到時段紀錄")
-        # 再將「日期」轉回 datetime 以便畫圖時自動按時間排序
         df_person = df_filtered.copy()
         df_person["date_dt"] = pd.to_datetime(df_person["日期"], format="%Y-%m-%d")
         df_person = df_person.sort_values("date_dt")
@@ -344,7 +294,7 @@ else:
     st.info("目前尚無簽到紀錄")
 
 # ----------------------------------------
-# 10. 使用說明
+# 11. 使用說明
 # ----------------------------------------
 st.markdown("---")
 st.markdown("### 使用說明")
