@@ -64,7 +64,7 @@ start_date = datetime.strptime("2025-06-09", "%Y-%m-%d").date()
 today = now.date()
 day_count = (today - start_date).days + 1
 weekday = "一二三四五六日"[now.weekday()]
-display_today = now.strftime("%m/%d") + f" ({weekday}) 禁食第{day_count}天"
+display_today = now.strftime("%m/%d") + f"（{weekday}） 禁食第{day_count}天"
 
 # Streamlit UI
 st.set_page_config(page_title="新世代教會禁食禱告簽到", page_icon="🙏", layout="wide")
@@ -83,12 +83,6 @@ except Exception:
     st.error("無法讀取帶領表")
     st.code(traceback.format_exc())
     st.stop()
-
-st.markdown(f"""
-<div style="text-align: center; line-height: 2; font-size: 1.2em; font-weight: bold;">
-    {display_today}<br>今日帶領人員
-</div>
-""", unsafe_allow_html=True)
 
 date_fmt = now.strftime("%-m/%-d")  # 若在 Windows 改 "%#m/%#d"
 date_header_rows = [2, 9, 16]
@@ -109,42 +103,31 @@ for idx in date_header_rows:
             leader_info[meal] = leader if leader else "尚未安排"
         break
 
+# 主標題與三餐負責人，簡潔對齊
 if not found:
     st.warning(f"找不到今天日期 {date_fmt} 在帶領表中")
 else:
-    for meal in ["早餐", "午餐", "晚餐"]:
-
-        st.markdown(f"""
-        <div style="text-align:center; margin-top:36px;">
-            <div style="font-size:2.6em; font-weight:800; letter-spacing:2px; margin-bottom:8px; color:#393c43;">
-                怡筠小組禁食禱告簽到
-            </div>
-            <div style="font-size:2em; font-weight:700; letter-spacing:6px; margin-bottom:28px; color:#888;">
-                06/09 ~ 06/29
-            </div>
-            <div style="font-size:1.3em; font-weight:700; margin-bottom:10px; color:#393c43;">
-                {now.strftime("%m/%d")}（{weekday}） 禁食第{day_count}天
-            </div>
-            <div style="font-size:1.13em; font-weight:600; margin-bottom:14px; color:#444;">
-                今日帶領人員
-            </div>
-            <table style="margin:auto; font-size:1.13em; line-height:2; font-weight:500;">
-                <tr>
-                    <td style="padding:0 30px;">早餐</td>
-                    <td style="padding:0 30px; color:#222;">{leader_info.get("早餐","尚未安排")}</td>
-                </tr>
-                <tr>
-                    <td style="padding:0 30px;">午餐</td>
-                    <td style="padding:0 30px; color:#222;">{leader_info.get("午餐","尚未安排")}</td>
-                </tr>
-                <tr>
-                    <td style="padding:0 30px;">晚餐</td>
-                    <td style="padding:0 30px; color:#222;">{leader_info.get("晚餐","尚未安排")}</td>
-                </tr>
-            </table>
+    st.markdown(f"""
+    <div style="text-align:center; margin-top:36px;">
+        <div style="font-size:2.6em; font-weight:800; letter-spacing:2px; margin-bottom:8px; color:#393c43;">
+            怡筠小組禁食禱告簽到
         </div>
-        """, unsafe_allow_html=True)
-
+        <div style="font-size:2em; font-weight:700; letter-spacing:6px; margin-bottom:30px; color:#888;">
+            06/09 ~ 06/29
+        </div>
+        <div style="font-size:1.25em; font-weight:600; margin-bottom:10px; color:#393c43;">
+            {display_today}
+        </div>
+        <div style="font-size:1.15em; font-weight:600; margin-bottom:16px; color:#444;">
+            今日帶領人員
+        </div>
+        <div style="font-size:1.11em; line-height:2; font-weight:500;">
+            <span style="display:inline-block; width:60px;">早餐</span>：{leader_info.get("早餐","尚未安排")}<br>
+            <span style="display:inline-block; width:60px;">午餐</span>：{leader_info.get("午餐","尚未安排")}<br>
+            <span style="display:inline-block; width:60px;">晚餐</span>：{leader_info.get("晚餐","尚未安排")}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -183,18 +166,15 @@ with st.form("sign_in_form"):
 
 st.markdown("---")
 
-# 自訂顏色，可依 member 順序自行加長
+# 累積簽到長條圖
+st.subheader("小組員累積簽到次數")
+df_all = read_all_records()
 color_list = [
     "#3498db", "#e67e22", "#9b59b6", "#2ecc71", "#e74c3c", "#1abc9c", "#f1c40f",
     "#34495e", "#95a5a6", "#16a085", "#7f8c8d", "#d35400", "#2980b9", "#c0392b", "#27ae60"
 ]
 color_map = {name: color_list[i % len(color_list)] for i, name in enumerate(members)}
 
-# 取對應顏色序列
-
-# 累積簽到長條圖
-st.subheader("小組員累積簽到次數")
-df_all = read_all_records()
 if not df_all.empty:
     df_plot = df_all.copy()
     if pd.api.types.is_datetime64_any_dtype(df_plot["日期"]):
@@ -203,18 +183,18 @@ if not df_all.empty:
     count_df = count_df.set_index("姓名").reindex(members, fill_value=0).reset_index()
     bar_colors = [color_map[name] for name in count_df["姓名"]]
     fig = go.Figure(
-    data=[go.Bar(
-        x=count_df["姓名"],
-        y=count_df["出席次數"],
-        marker_color=bar_colors,
-        width=[0.3]*len(count_df),  # 每個 bar 寬度設為 0.7（0~1，1是滿格寬）
-    )]
+        data=[go.Bar(
+            x=count_df["姓名"],
+            y=count_df["出席次數"],
+            marker_color=bar_colors,
+            width=[0.7]*len(count_df),
+        )]
     )
     fig.update_layout(
-    yaxis_title="簽到次數",
-    xaxis_title="姓名",
-    title="小組員累積簽到次數",
-    bargap=0.3  # bar 間距（可視覺微調）
+        yaxis_title="簽到次數",
+        xaxis_title="姓名",
+        title="小組員累積簽到次數",
+        bargap=0.3
     )
     st.plotly_chart(fig, use_container_width=True)
 else:
