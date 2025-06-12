@@ -166,7 +166,6 @@ color_list = [
 color_map = {name: color_list[i % len(color_list)] for i, name in enumerate(members)}
 
 # 取對應顏色序列
-bar_colors = [color_map[name] for name in count_df["姓名"]]
 
 # 累積簽到長條圖
 st.subheader("小組員累積簽到次數")
@@ -177,6 +176,7 @@ if not df_all.empty:
         df_plot["日期"] = df_plot["日期"].dt.strftime("%Y-%m-%d")
     count_df = df_plot.groupby("姓名").size().reset_index(name="出席次數")
     count_df = count_df.set_index("姓名").reindex(members, fill_value=0).reset_index()
+    bar_colors = [color_map[name] for name in count_df["姓名"]]
     fig = go.Figure(
     data=[go.Bar(
         x=count_df["姓名"],
