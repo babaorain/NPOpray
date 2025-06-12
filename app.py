@@ -173,13 +173,13 @@ if not df_all.empty:
         y=count_df["出席次數"],
         marker_color='rgba(26, 118, 255, 0.7)'
     )]
-)
-fig.update_layout(
+    )
+    fig.update_layout(
     yaxis_title="簽到次數",
     xaxis_title="姓名",
     title="小組員累積簽到次數"
-)
-st.plotly_chart(fig, use_container_width=True)
+    )
+    st.plotly_chart(fig, use_container_width=True)
 else:
     st.info("尚無簽到資料")
 
