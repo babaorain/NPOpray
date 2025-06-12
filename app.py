@@ -158,6 +158,16 @@ with st.form("sign_in_form"):
 
 st.markdown("---")
 
+# 自訂顏色，可依 member 順序自行加長
+color_list = [
+    "#3498db", "#e67e22", "#9b59b6", "#2ecc71", "#e74c3c", "#1abc9c", "#f1c40f",
+    "#34495e", "#95a5a6", "#16a085", "#7f8c8d", "#d35400", "#2980b9", "#c0392b", "#27ae60"
+]
+color_map = {name: color_list[i % len(color_list)] for i, name in enumerate(members)}
+
+# 取對應顏色序列
+bar_colors = [color_map[name] for name in count_df["姓名"]]
+
 # 累積簽到長條圖
 st.subheader("小組員累積簽到次數")
 df_all = read_all_records()
@@ -171,13 +181,15 @@ if not df_all.empty:
     data=[go.Bar(
         x=count_df["姓名"],
         y=count_df["出席次數"],
-        marker_color='rgba(26, 118, 255, 0.7)'
+        marker_color=bar_colors,
+        width=[0.7]*len(count_df),  # 每個 bar 寬度設為 0.7（0~1，1是滿格寬）
     )]
     )
     fig.update_layout(
     yaxis_title="簽到次數",
     xaxis_title="姓名",
-    title="小組員累積簽到次數"
+    title="小組員累積簽到次數",
+    bargap=0.3  # bar 間距（可視覺微調）
     )
     st.plotly_chart(fig, use_container_width=True)
 else:
