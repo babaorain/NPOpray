@@ -187,7 +187,7 @@ if not df_all.empty:
             x=count_df["姓名"],
             y=count_df["出席次數"],
             marker_color=bar_colors,
-            width=[0.7]*len(count_df),
+            width=[0.4]*len(count_df),
         )]
     )
     fig.update_layout(
