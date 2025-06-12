@@ -114,36 +114,36 @@ if not found:
 else:
     for meal in ["早餐", "午餐", "晚餐"]:
 
-    st.markdown(f"""
-    <div style="text-align:center; margin-top:36px;">
-        <div style="font-size:2.6em; font-weight:800; letter-spacing:2px; margin-bottom:8px; color:#393c43;">
-            怡筠小組禁食禱告簽到
+        st.markdown(f"""
+        <div style="text-align:center; margin-top:36px;">
+            <div style="font-size:2.6em; font-weight:800; letter-spacing:2px; margin-bottom:8px; color:#393c43;">
+                怡筠小組禁食禱告簽到
+            </div>
+            <div style="font-size:2em; font-weight:700; letter-spacing:6px; margin-bottom:28px; color:#888;">
+                06/09 ~ 06/29
+            </div>
+            <div style="font-size:1.3em; font-weight:700; margin-bottom:10px; color:#393c43;">
+                {now.strftime("%m/%d")}（{weekday}） 禁食第{day_count}天
+            </div>
+            <div style="font-size:1.13em; font-weight:600; margin-bottom:14px; color:#444;">
+                今日帶領人員
+            </div>
+            <table style="margin:auto; font-size:1.13em; line-height:2; font-weight:500;">
+                <tr>
+                    <td style="padding:0 30px;">早餐</td>
+                    <td style="padding:0 30px; color:#222;">{leader_info.get("早餐","尚未安排")}</td>
+                </tr>
+                <tr>
+                    <td style="padding:0 30px;">午餐</td>
+                    <td style="padding:0 30px; color:#222;">{leader_info.get("午餐","尚未安排")}</td>
+                </tr>
+                <tr>
+                    <td style="padding:0 30px;">晚餐</td>
+                    <td style="padding:0 30px; color:#222;">{leader_info.get("晚餐","尚未安排")}</td>
+                </tr>
+            </table>
         </div>
-        <div style="font-size:2em; font-weight:700; letter-spacing:6px; margin-bottom:28px; color:#888;">
-            06/09 ~ 06/29
-        </div>
-        <div style="font-size:1.3em; font-weight:700; margin-bottom:10px; color:#393c43;">
-            {now.strftime("%m/%d")}（{weekday}） 禁食第{day_count}天
-        </div>
-        <div style="font-size:1.13em; font-weight:600; margin-bottom:14px; color:#444;">
-            今日帶領人員
-        </div>
-        <table style="margin:auto; font-size:1.13em; line-height:2; font-weight:500;">
-            <tr>
-                <td style="padding:0 30px;">早餐</td>
-                <td style="padding:0 30px; color:#222;">{leader_info.get("早餐","尚未安排")}</td>
-            </tr>
-            <tr>
-                <td style="padding:0 30px;">午餐</td>
-                <td style="padding:0 30px; color:#222;">{leader_info.get("午餐","尚未安排")}</td>
-            </tr>
-            <tr>
-                <td style="padding:0 30px;">晚餐</td>
-                <td style="padding:0 30px; color:#222;">{leader_info.get("晚餐","尚未安排")}</td>
-            </tr>
-        </table>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
 
 st.markdown("---")
