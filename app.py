@@ -74,13 +74,6 @@ members = [
     "艾鑫", "嵐翌", "Annie", "怡筠", "柏清哥"
 ]
 
-st.markdown(f"""
-<div style="text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-    <h2 style="font-weight:700;">怡筠小組禁食禱告簽到<br>
-    <span style="font-size:1em; color:#555; letter-spacing:2px;">06/09~06/29</span></h2>
-</div>
-""", unsafe_allow_html=True)
-
 # 帶領表
 try:
     sched_sh = gc.open_by_key(SCHEDULE_SHEET_ID)
@@ -120,7 +113,39 @@ if not found:
     st.warning(f"找不到今天日期 {date_fmt} 在帶領表中")
 else:
     for meal in ["早餐", "午餐", "晚餐"]:
-        st.markdown(f"<p style='text-align:center;'><strong>{meal}</strong>：{leader_info[meal]}</p>", unsafe_allow_html=True)
+
+st.markdown(f"""
+<div style="text-align:center; margin-top:36px;">
+    <div style="font-size:2.6em; font-weight:800; letter-spacing:2px; margin-bottom:8px; color:#393c43;">
+        怡筠小組禁食禱告簽到
+    </div>
+    <div style="font-size:2em; font-weight:700; letter-spacing:6px; margin-bottom:28px; color:#888;">
+        06/09 ~ 06/29
+    </div>
+    <div style="font-size:1.3em; font-weight:700; margin-bottom:10px; color:#393c43;">
+        {now.strftime("%m/%d")}（{weekday}） 禁食第{day_count}天
+    </div>
+    <div style="font-size:1.13em; font-weight:600; margin-bottom:14px; color:#444;">
+        今日帶領人員
+    </div>
+    <table style="margin:auto; font-size:1.13em; line-height:2; font-weight:500;">
+        <tr>
+            <td style="padding:0 30px;">早餐</td>
+            <td style="padding:0 30px; color:#222;">{leader_info.get("早餐","尚未安排")}</td>
+        </tr>
+        <tr>
+            <td style="padding:0 30px;">午餐</td>
+            <td style="padding:0 30px; color:#222;">{leader_info.get("午餐","尚未安排")}</td>
+        </tr>
+        <tr>
+            <td style="padding:0 30px;">晚餐</td>
+            <td style="padding:0 30px; color:#222;">{leader_info.get("晚餐","尚未安排")}</td>
+        </tr>
+    </table>
+</div>
+""", unsafe_allow_html=True)
+
+
 st.markdown("---")
 
 # 簽到表單
