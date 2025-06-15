@@ -48,7 +48,7 @@ if not ws.get_all_values() or ws.get_all_values() == [[]]:
 def read_all_records():
     data = ws.get_all_records()
     if not data:
-        return pd.DataFrame(columns=["姓名", "日期", "時段", "禱告方式"])
+        return pd.DataFrame(columns=["日期", "姓名", "時段", "禱告方式"])
     df = pd.DataFrame(data)
     try:
         df["日期"] = pd.to_datetime(df["日期"], format="%Y-%m-%d")
@@ -56,8 +56,8 @@ def read_all_records():
         pass
     return df
 
-def add_record(name, date_str, meal, prayer_type):
-    ws.append_row([name, date_str, meal, prayer_type])
+def add_record(date_str, name, meal, prayer_type):
+    ws.append_row([date_str, name, meal, prayer_type])
 
 # 時間設定
 start_date = datetime.strptime("2025-06-09", "%Y-%m-%d").date()
