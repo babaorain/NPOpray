@@ -43,7 +43,7 @@ except Exception:
 
 if not ws.get_all_values() or ws.get_all_values() == [[]]:
     ws.clear()
-    ws.append_row(["姓名", "日期", "時段", "禱告方式"])
+    ws.append_row(["日期", "姓名", "時段", "禱告方式"])
 
 def read_all_records():
     data = ws.get_all_records()
