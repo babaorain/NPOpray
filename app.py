@@ -159,7 +159,7 @@ with st.form("sign_in_form"):
                     (check.get("禱告方式", None) == prayer_type)
                 ).any()
             if not already:
-                add_record(name, str_date, meal, prayer_type)
+                add_record(str_date, name, meal, prayer_type)
                 st.success(f"感謝 {name} 完成「{meal}」簽到，禱告方式：{prayer_type}！")
             else:
                 st.warning(f"{name} 今天的「{meal}」「{prayer_type}」已簽到過")
